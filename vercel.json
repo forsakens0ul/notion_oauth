@@ -1,0 +1,39 @@
+{
+  "functions": {
+    "api/notion/callback.js": {
+      "maxDuration": 10
+    },
+    "api/notion/upload.js": {
+      "maxDuration": 15
+    },
+    "api/netease/data.js": {
+      "maxDuration": 10
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/auth",
+      "destination": "/api/notion/callback",
+      "permanent": false
+    }
+  ]
+}
