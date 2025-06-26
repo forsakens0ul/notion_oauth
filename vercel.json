@@ -25,8 +25,8 @@
     }
   ],
   "env": {
-    "NOTION_CLIENT_ID": "@notion_client_id",
-    "NOTION_CLIENT_SECRET": "@notion_client_secret",
+    "NOTION_CLIENT_ID": "@NOTION_CLIENT_ID",
+    "NOTION_CLIENT_SECRET": "@NOTION_CLIENT_SECRET",
     "NOTION_REDIRECT_URI": "https://v0-new-project-s6hp1wgs2wz.vercel.app/api/notion/callback"
   }
 }
