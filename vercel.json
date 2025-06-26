@@ -1,39 +1,32 @@
 {
-  "functions": {
-    "api/notion/callback.js": {
-      "maxDuration": 10
-    },
-    "api/notion/upload.js": {
-      "maxDuration": 15
-    },
-    "api/netease/data.js": {
-      "maxDuration": 10
-    }
-  },
-  "headers": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
-        }
-      ]
+      "src": "package.json",
+      "use": "@vercel/next"
     }
   ],
-  "redirects": [
+  "routes": [
     {
-      "source": "/auth",
-      "destination": "/api/notion/callback",
-      "permanent": false
+      "src": "/api/notion/callback",
+      "dest": "/api/notion/callback"
+    },
+    {
+      "src": "/api/notion/exchange",
+      "dest": "/api/notion/exchange"
+    },
+    {
+      "src": "/success",
+      "dest": "/success"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
     }
-  ]
+  ],
+  "env": {
+    "NOTION_CLIENT_ID": "@notion_client_id",
+    "NOTION_CLIENT_SECRET": "@notion_client_secret",
+    "NOTION_REDIRECT_URI": "https://v0-new-project-s6hp1wgs2wz.vercel.app/api/notion/callback"
+  }
 }

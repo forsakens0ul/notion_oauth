@@ -31,18 +31,25 @@ export default async function handler(req, res) {
 
   console.log("收到授权码:", code.substring(0, 10) + "...");
 
-  const client_id =
-    process.env.NOTION_CLIENT_ID || "208d872b-594c-80ec-a8ef-00372cbeec91";
-  const client_secret =
-    process.env.NOTION_CLIENT_SECRET ||
-    "secret_aKx7qjg5U2d42SB4ZUEoOeNRpbvQ21IHLk6Vle1Ap1l";
-  const redirect_uri =
-    process.env.NOTION_REDIRECT_URI ||
-    "https://v0-new-project-s6hp1wgs2wz.vercel.app/api/notion/callback";
+  const client_id = process.env.NOTION_CLIENT_ID;
+  const client_secret = process.env.NOTION_CLIENT_SECRET;
+  const redirect_uri = process.env.NOTION_REDIRECT_URI;
+
+  if (!client_id || !client_secret) {
+    console.error("缺少Notion集成凭据");
+    return res.status(500).send(`
+      <html>
+        <head><title>服务器配置错误</title></head>
+        <body>
+          <h1>服务器配置错误</h1>
+          <p>服务器缺少必要的Notion集成凭据</p>
+        </body>
+      </html>
+    `);
+  }
 
   try {
     console.log("准备交换令牌:", {
-      client_id: client_id.substring(0, 10) + "...",
       redirect_uri,
     });
 
