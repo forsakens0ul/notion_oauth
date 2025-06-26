@@ -1,112 +1,71 @@
-# Notion OAuth Integration with Vercel
+# Notion OAuth 代理服务
 
-A serverless application for integrating with Notion via OAuth, with optional NetEase Cloud Music data fetching.
+这个项目提供了用于 Notion OAuth 授权流程的代理服务，主要用于 Chrome 扩展程序与 Notion API 的集成。
 
-## Project Structure
+## 功能
 
-\`\`\`
-/my-vercel-project
-├── api/
-│   ├── notion/
-│   │   ├── callback.js     ← Handle Notion OAuth callback
-│   │   └── upload.js       ← Upload data to Notion database
-│   └── netease/
-│       └── data.js         ← Fetch data from NetEase Cloud Music
-├── .env                   ← Environment variables
-├── vercel.json            ← Vercel configuration
-├── index.html             ← Frontend interface
-└── README.md              ← This file
-\`\`\`
+1. **OAuth 授权回调** - 处理 Notion 授权后的回调
+2. **令牌交换 API** - 安全地交换授权码获取访问令牌
+3. **成功页面** - 显示授权成功并将令牌发送回扩展程序
 
-## Setup Instructions
+## 部署步骤
 
-### 1. Create a Notion Integration
+### 1. 准备工作
 
-1. Go to [Notion Developers](https://www.notion.so/my-integrations)
-2. Click "New integration"
-3. Fill in the basic information
-4. Set the integration type to "Public"
-5. Add capabilities: "Read user information including email addresses"
-6. Set redirect URI: `https://your-app.vercel.app/api/notion/callback`
-7. Save and copy the Client ID and Client Secret
+确保你有以下信息：
 
-### 2. Configure Environment Variables
+- Notion 集成的客户端 ID
+- Notion 集成的客户端密钥
+- 注册在 Notion 开发者平台上的重定向 URI (通常是`https://你的域名/api/notion/callback`)
 
-Create a `.env` file in your project root:
+### 2. 设置环境变量
 
-\`\`\`env
-NOTION_CLIENT_ID=your_notion_client_id
-NOTION_CLIENT_SECRET=your_notion_client_secret
-NOTION_REDIRECT_URI=https://your-app.vercel.app/api/notion/callback
-CLIENT_URL=https://your-app.vercel.app
-\`\`\`
+创建`.env`文件：
 
-### 3. Deploy to Vercel
+```
+NOTION_CLIENT_ID=你的客户端ID
+NOTION_CLIENT_SECRET=你的客户端密钥
+NOTION_REDIRECT_URI=https://你的域名/api/notion/callback
+```
 
-\`\`\`bash
-# Install Vercel CLI
+### 3. 部署到 Vercel
+
+最简单的部署方式是使用 Vercel：
+
+```bash
 npm i -g vercel
-
-# Deploy
 vercel
+```
 
-# Set environment variables in Vercel dashboard
-# or use CLI: vercel env add
-\`\`\`
+或者直接连接 GitHub 仓库到 Vercel 进行自动部署。
 
-### 4. Update Client ID in HTML
+### 4. 更新 Notion 集成设置
 
-Edit `index.html` and replace `your_notion_client_id` with your actual Notion Client ID.
+在[Notion 开发者平台](https://www.notion.so/my-integrations)中：
 
-## API Endpoints
+1. 选择你的集成
+2. 更新重定向 URI 为`https://你的域名/api/notion/callback`
+3. 确保已启用正确的权限范围
+
+### 5. 更新 Chrome 扩展
+
+在 Chrome 扩展中：
+
+1. 修改授权 URL 为`https://api.notion.com/v1/oauth/authorize?owner=user&client_id=你的客户端ID&redirect_uri=你的重定向URI&response_type=code`
+2. 修改令牌交换端点为`https://你的域名/api/notion/exchange`
+
+## API 端点
 
 ### `/api/notion/callback`
-- **Method**: GET
-- **Purpose**: Handle OAuth callback from Notion
-- **Parameters**: `code`, `state` (from Notion)
 
-### `/api/notion/upload`
-- **Method**: POST
-- **Purpose**: Upload data to Notion database
-- **Body**:
-  \`\`\`json
-  {
-    "access_token": "notion_access_token",
-    "database_id": "notion_database_id",
-    "data": {
-      "title": "Entry title",
-      "description": "Entry description",
-      "tags": ["tag1", "tag2"],
-      "date": "2023-12-01"
-    }
-  }
-  \`\`\`
+处理 Notion 授权后的回调，交换临时授权码获取访问令牌。
 
-### `/api/netease/data`
-- **Method**: GET
-- **Purpose**: Fetch data from NetEase Cloud Music
-- **Parameters**: `type` (playlist/song/album), `id`
+### `/api/notion/exchange`
 
-## Usage Flow
+接收客户端提供的授权码、客户端 ID 和密钥，与 Notion API 交换获取访问令牌。
 
-1. User clicks "Connect with Notion" button
-2. Redirected to Notion OAuth page
-3. User authorizes the application
-4. Notion redirects back to `/api/notion/callback`
-5. Callback handler exchanges code for access token
-6. User can now upload data to Notion databases
+## 注意事项
 
-## Security Notes
-
-- Store access tokens securely (consider using a database)
-- Validate all input data before sending to Notion
-- Use HTTPS in production
-- Implement rate limiting for API endpoints
-- Consider implementing user sessions for better UX
-
-## Customization
-
-- Modify `formatDataForNotion()` in `upload.js` to match your database schema
-- Add more NetEase API endpoints in `data.js`
-- Customize the frontend interface in `index.html`
-- Add authentication middleware for protected routes
+1. 客户端密钥应保密，不应暴露在前端代码中
+2. 在生产环境中，建议使用更安全的方式处理令牌
+3. 确保重定向 URI 在所有地方保持一致

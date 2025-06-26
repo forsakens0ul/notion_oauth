@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Notion 授权成功</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        text-align: center;
+      }
+      .container {
+        background-color: #f7f7f7;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-top: 50px;
+      }
+      h1 {
+        color: #2e6e4c;
+        margin-bottom: 20px;
+      }
+      .token-box {
+        background-color: #e9f5ee;
+        border: 1px solid #c3e6cb;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 20px 0;
+        word-break: break-all;
+        text-align: left;
+        font-family: monospace;
+        font-size: 12px;
+        color: #155724;
+      }
+      .message {
+        margin-bottom: 20px;
+        font-size: 16px;
+      }
+      .closing {
+        margin-top: 30px;
+        color: #666;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Notion 授权成功！</h1>
+      <div class="message">您的Notion账户已成功授权。</div>
+
+      <div class="token-box" id="token-display"></div>
+
+      <div class="message">
+        该页面将在5秒内自动关闭，并将令牌发送回扩展程序。
+      </div>
+
+      <div class="closing">
+        如果页面没有自动关闭，请手动关闭此窗口并返回扩展程序。
+      </div>
+    </div>
+
+    <script>
+      // 从URL获取access_token
+      const params = new URLSearchParams(window.location.search);
+      const accessToken = params.get("access_token");
+
+      // 显示令牌
+      if (accessToken) {
+        document.getElementById("token-display").textContent = accessToken;
+
+        // 尝试发送消息到Chrome扩展
+        try {
+          // 方法1: 尝试使用chrome.runtime.sendMessage
+          if (window.chrome && chrome.runtime) {
+            chrome.runtime.sendMessage(
+              {
+                action: "setNotionToken",
+                token: accessToken,
+              },
+              function (response) {
+                console.log("发送令牌到扩展:", response);
+              }
+            );
+          }
+          // 方法2: 尝试使用localStorage（扩展可能会检查）
+          else if (window.localStorage) {
+            localStorage.setItem("notion_access_token", accessToken);
+            console.log("已保存令牌到localStorage");
+          }
+        } catch (e) {
+          console.error("发送令牌到扩展时出错:", e);
+        }
+
+        // 延迟关闭窗口
+        setTimeout(() => {
+          window.close();
+        }, 5000);
+      } else {
+        document.getElementById("token-display").textContent = "未找到访问令牌";
+      }
+    </script>
+  </body>
+</html>
