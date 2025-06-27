@@ -20,13 +20,21 @@
       "dest": "/success"
     },
     {
+      "src": "/auth-result",
+      "dest": "/auth-result"
+    },
+    {
+      "src": "/fixed",
+      "dest": "/fixed"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }
   ],
   "env": {
-    "NOTION_CLIENT_ID": "@NOTION_CLIENT_ID",
-    "NOTION_CLIENT_SECRET": "@NOTION_CLIENT_SECRET",
+    "NOTION_CLIENT_ID": "NOTION_CLIENT_ID",
+    "NOTION_CLIENT_SECRET": "NOTION_CLIENT_SECRET",
     "NOTION_REDIRECT_URI": "https://v0-new-project-s6hp1wgs2wz.vercel.app/api/notion/callback"
   }
 }

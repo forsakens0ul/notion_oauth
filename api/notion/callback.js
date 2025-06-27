@@ -43,6 +43,8 @@ export default async function handler(req, res) {
         <body>
           <h1>服务器配置错误</h1>
           <p>服务器缺少必要的Notion集成凭据</p>
+          <p>Client ID: ${client_id ? "已设置" : "未设置"}</p>
+          <p>Client Secret: ${client_secret ? "已设置" : "未设置"}</p>
         </body>
       </html>
     `);
@@ -51,6 +53,8 @@ export default async function handler(req, res) {
   try {
     console.log("准备交换令牌:", {
       redirect_uri,
+      client_id_available: !!client_id,
+      client_secret_available: !!client_secret,
     });
 
     // 交换授权码获取访问令牌
@@ -69,6 +73,9 @@ export default async function handler(req, res) {
       }),
     });
 
+    // 添加响应状态码日志
+    console.log("Notion令牌交换响应状态:", response.status);
+
     const data = await response.json();
 
     if (data.access_token) {
@@ -78,8 +85,10 @@ export default async function handler(req, res) {
         workspace_name: data.workspace_name,
       });
 
-      // 成功获取令牌，重定向到成功页面
-      return res.redirect(`/success?access_token=${data.access_token}`);
+      // 直接重定向到固定页面
+      return res.redirect(
+        `/fixed?access_token=${encodeURIComponent(data.access_token)}`
+      );
     } else {
       console.error("令牌交换失败:", data);
       return res.status(400).send(`
@@ -89,6 +98,12 @@ export default async function handler(req, res) {
             <h1>令牌交换失败</h1>
             <p>错误: ${data.error || "未知错误"}</p>
             <p>描述: ${data.error_description || "无详细信息"}</p>
+            <div>
+              <h3>调试信息</h3>
+              <p>授权码: ${code}</p>
+              <p>重定向URI: ${redirect_uri}</p>
+              <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
           </body>
         </html>
       `);
@@ -101,6 +116,9 @@ export default async function handler(req, res) {
         <body>
           <h1>服务器错误</h1>
           <p>错误信息: ${err.message}</p>
+          <p>授权码: ${code}</p>
+          <p>重定向URI: ${redirect_uri}</p>
+          <pre>${err.stack}</pre>
         </body>
       </html>
     `);
