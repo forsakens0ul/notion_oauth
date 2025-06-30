@@ -30,8 +30,8 @@ export default async function handler(req, res) {
     console.log("收到令牌交换请求:", {
       code: code.substring(0, 10) + "...",
       redirect_uri,
-      has_client_id: !!client_id,
-      has_client_secret: !!client_secret,
+      client_id: client_id.substring(0, 10) + "...",
+      has_secret: !!client_secret,
     });
 
     // 发送请求到Notion API交换令牌

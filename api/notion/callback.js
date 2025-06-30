@@ -1,32 +1,36 @@
 // /api/notion/callback.js
-export default async function handler(req, res) {
-  // 获取授权码
-  const { code, error, error_description } = req.query;
+import { NextResponse } from "next/server";
 
-  // 如果有错误，显示错误信息
+export async function GET(request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+  const error = searchParams.get("error");
+  const error_description = searchParams.get("error_description");
+
+  // 处理错误
   if (error) {
     console.error("授权错误:", error, error_description);
-    return res.status(400).send(`
+    return new Response(
+      `
       <html>
         <head><title>授权失败</title></head>
         <body>
           <h1>授权失败</h1>
           <p>错误: ${error}</p>
           <p>描述: ${error_description || "无详细信息"}</p>
-          <script>
-            // 通知扩展程序授权失败
-            setTimeout(() => {
-              window.close();
-            }, 5000);
-          </script>
         </body>
       </html>
-    `);
+    `,
+      {
+        status: 400,
+        headers: { "Content-Type": "text/html" },
+      }
+    );
   }
 
   // 检查授权码
   if (!code) {
-    return res.status(400).json({ error: "缺少授权码" });
+    return NextResponse.json({ error: "缺少授权码" }, { status: 400 });
   }
 
   console.log("收到授权码:", code.substring(0, 10) + "...");
@@ -37,7 +41,8 @@ export default async function handler(req, res) {
 
   if (!client_id || !client_secret) {
     console.error("缺少Notion集成凭据");
-    return res.status(500).send(`
+    return new Response(
+      `
       <html>
         <head><title>服务器配置错误</title></head>
         <body>
@@ -47,7 +52,12 @@ export default async function handler(req, res) {
           <p>Client Secret: ${client_secret ? "已设置" : "未设置"}</p>
         </body>
       </html>
-    `);
+    `,
+      {
+        status: 500,
+        headers: { "Content-Type": "text/html" },
+      }
+    );
   }
 
   try {
@@ -73,7 +83,6 @@ export default async function handler(req, res) {
       }),
     });
 
-    // 添加响应状态码日志
     console.log("Notion令牌交换响应状态:", response.status);
 
     const data = await response.json();
@@ -85,13 +94,40 @@ export default async function handler(req, res) {
         workspace_name: data.workspace_name,
       });
 
-      // 直接重定向到固定页面
-      return res.redirect(
-        `/fixed?access_token=${encodeURIComponent(data.access_token)}`
-      );
+      // 定义重定向URL
+      const forwardedHost = request.headers.get("x-forwarded-host"); // 负载均衡器之前的原始主机名
+      const isLocalEnv = process.env.NODE_ENV === "development";
+
+      let redirectUrl;
+      if (isLocalEnv) {
+        redirectUrl = `${origin}/auth-result?access_token=${encodeURIComponent(
+          data.access_token
+        )}`;
+      } else if (forwardedHost) {
+        redirectUrl = `https://${forwardedHost}/auth-result?access_token=${encodeURIComponent(
+          data.access_token
+        )}`;
+      } else {
+        redirectUrl = `${origin}/auth-result?access_token=${encodeURIComponent(
+          data.access_token
+        )}`;
+      }
+
+      // 添加其他参数
+      redirectUrl += `&token_type=${encodeURIComponent(data.token_type || "")}`;
+      redirectUrl += `&bot_id=${encodeURIComponent(data.bot_id || "")}`;
+      redirectUrl += `&workspace_id=${encodeURIComponent(
+        data.workspace_id || ""
+      )}`;
+      redirectUrl += `&workspace_name=${encodeURIComponent(
+        data.workspace_name || ""
+      )}`;
+
+      return NextResponse.redirect(redirectUrl);
     } else {
       console.error("令牌交换失败:", data);
-      return res.status(400).send(`
+      return new Response(
+        `
         <html>
           <head><title>令牌交换失败</title></head>
           <body>
@@ -106,11 +142,17 @@ export default async function handler(req, res) {
             </div>
           </body>
         </html>
-      `);
+      `,
+        {
+          status: 400,
+          headers: { "Content-Type": "text/html" },
+        }
+      );
     }
   } catch (err) {
     console.error("回调处理错误:", err);
-    return res.status(500).send(`
+    return new Response(
+      `
       <html>
         <head><title>服务器错误</title></head>
         <body>
@@ -121,6 +163,11 @@ export default async function handler(req, res) {
           <pre>${err.stack}</pre>
         </body>
       </html>
-    `);
+    `,
+      {
+        status: 500,
+        headers: { "Content-Type": "text/html" },
+      }
+    );
   }
 }
